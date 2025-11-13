@@ -17,26 +17,28 @@
       <i class="fa fa-medkit"></i>
     </h2>
   </header>
+
   <main>
     <div class="container my-4">
       <div class="text-center mb-3">
-        <h5 class="mb-3">Choisissez un domaine médical :</h5>
-        <div id="categories" class="d-flex flex-wrap justify-content-center gap-2">
-          {% for cat in categories %}
+      </div>
+      <div id="medecins-list" class="mb-4"></div>
+      <div id="chat-box" class="border bg-white rounded p-3" style="height: 60vh; overflow-y: auto;"></div>
+    </div>
+  </main>
+
+  <footer class="bg-dark py-3 border-top mt-auto">
+    <div class="container">
+      <h5 class="mb-3">Choisissez un domaine médical :</h5>
+      <div id="categories" class="d-flex flex-wrap justify-content-center gap-2 d-none">
+        {% for cat in categories %}
           <button class="btn btn-outline-success btn-sm" onclick="loadDoctors('{{ cat.id }}', '{{ cat.nom }}')">
             {{ cat.nom }}
           </button>
-          {% endfor %}
-        </div>
+        {% endfor %}
       </div>
-      <div id="medecins-list" class="mb-4"></div>
-      <div id="chat-box" class="border bg-white rounded p-3" style="height: 52vh; overflow-y: auto;"></div>
 
-    </div>
-  </main>
-  <footer class="bg-dark py-3 border-top mt-auto">
-    <div class="container">
-      <form id="chat-form" class="d-flex">
+      <form id="chat-form" class="d-flex mt-2">
         <input id="user-input" type="text" class="form-control me-2" placeholder="Votre message..." required />
         <button id="send-btn" type="submit" class="btn btn-success">
           Envoyer <i class="bi bi-send"></i>
@@ -44,134 +46,145 @@
       </form>
     </div>
   </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-  const form = document.getElementById("chat-form");
-  const input = document.getElementById("user-input");
-  const chatBox = document.getElementById("chat-box");
-  const sendBtn = document.getElementById("send-btn");
-  let isWaiting = false;
-
-  function addMessage(sender, text, id = null) {
-    const msgDiv = document.createElement("div");
-    msgDiv.classList.add("my-2");
-    if (id) msgDiv.dataset.id = id;
-
-    if (sender === "user") {
-      msgDiv.innerHTML = `
-        <div class="d-flex justify-content-end">
-          <div class="p-2 rounded bg-success text-white">
-            <strong>Vous :</strong> ${text}
-          </div>
-        </div>`;
-    } else {
-      msgDiv.innerHTML = `
-        <div class="d-flex justify-content-start">
-          <div class="p-2 rounded bg-light border">
-            <strong>IA :</strong> ${text}
-          </div>
-        </div>`;
-    }
-
-    chatBox.appendChild(msgDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    addMessage("bot", "Bonjour ! Posez vos questions d’ordre médical ou sélectionnez un domaine ci-dessus pour voir les spécialistes disponibles.");
-  });
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (isWaiting) return;
-
-    const userMessage = input.value.trim();
-    if (!userMessage) return;
-
-    addMessage("user", userMessage);
-    input.value = "";
-    input.disabled = true;
-    sendBtn.disabled = true;
-    isWaiting = true;
-
-    const messageId = `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    addMessage("bot", "<i>Analyse en cours...</i>", messageId);
-
-    try {
-      const response = await fetch("/api/chat/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage }),
-      });
-
-      const data = await response.json();
-      const loadingElem = chatBox.querySelector(`[data-id="${messageId}"]`);
-      if (loadingElem) loadingElem.remove();
-
-      if (data.reply) {
-        addMessage("bot", data.reply);
-      } else {
-        addMessage("bot", " Réponse vide du serveur.");
-      }
-    } catch (error) {
-      addMessage("bot", " Erreur de connexion au serveur.");
-      console.error("Erreur :", error);
-    } finally {
-      input.disabled = false;
-      sendBtn.disabled = false;
-      input.focus();
-      isWaiting = false;
-    }
-  });
-  async function loadDoctors(categorieId, categorieNom) {
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+    const sendBtn = document.getElementById("send-btn");
+    const categoriesDiv = document.getElementById("categories");
     const medecinsList = document.getElementById("medecins-list");
-    medecinsList.innerHTML = `
-      <div class="alert alert-info mb-2">
-        <i class="bi bi-hourglass-split"></i> Chargement des médecins en ${categorieNom}...
-      </div>`;
+    let isWaiting = false;
 
-    try {
-      const response = await fetch(`/api/medecins/${categorieId}/`);
-      const data = await response.json();
+    function addMessage(sender, text, id = null) {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("my-2");
+      if (id) msgDiv.dataset.id = id;
 
-      if (data.error) {
-        medecinsList.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-        return;
-      }
-
-      if (!data.medecins.length) {
-        medecinsList.innerHTML = `<div class="alert alert-warning">Aucun médecin trouvé en ${categorieNom}.</div>`;
-        return;
-      }
-
-      let html = `
-        <div class="card border-success mb-3">
-          <div class="card-header bg-success text-white">
-            <i class="bi bi-person-badge"></i> Médecins spécialisés en ${data.categorie}
+      if (sender === "user") {
+        msgDiv.innerHTML = `
+          <div class="d-flex justify-content-end">
+            <div class="p-2 rounded bg-success text-white">
+              <strong>Vous :</strong> ${text}
+            </div>
           </div>
-          <ul class="list-group list-group-flush">`;
+        `;
+      } else {
+        msgDiv.innerHTML = `
+          <div class="d-flex justify-content-start">
+            <div class="p-2 rounded bg-light border">
+              <strong>IA :</strong> ${text}
+            </div>
+          </div>
+        `;
+      }
 
-      data.medecins.forEach(m => {
-        html += `
-          <li class="list-group-item">
-            <strong>${m.nom}</strong> — ${m.specialite}<br>
-            <span class="text-muted"> ${m.email}</span><br>
-            <span class="text-muted"> ${m.telephone}</span>
-          </li>`;
-      });
-
-      html += `</ul></div>`;
-      medecinsList.innerHTML = html;
-      addMessage("bot", `Voici les spécialistes disponibles en ${categorieNom} :`);
-      data.medecins.forEach(m => {
-        addMessage("bot", `<strong>${m.nom}</strong> (${m.specialite}) — ${m.telephone}`);
-      });
-
-    } catch (error) {
-      medecinsList.innerHTML = `<div class="alert alert-danger">Erreur lors du chargement.</div>`;
-      console.error(error);
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
-  }
+
+    function showCategoryButtons() {
+      categoriesDiv.classList.remove("d-none");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      addMessage("bot", "Bonjour ! Posez vos questions d’ordre médical ou sélectionnez un domaine ci-dessus pour voir les spécialistes disponibles.");
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (isWaiting) return;
+
+      const userMessage = input.value.trim();
+      if (!userMessage) return;
+
+      addMessage("user", userMessage);
+      input.value = "";
+      input.disabled = true;
+      sendBtn.disabled = true;
+      isWaiting = true;
+
+      const messageId = `msg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      addMessage("bot", "<i>Analyse en cours...</i>", messageId);
+
+      try {
+        const response = await fetch("/api/chat/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userMessage }),
+        });
+
+        const data = await response.json();
+        const loadingElem = chatBox.querySelector(`[data-id="${messageId}"]`);
+        if (loadingElem) loadingElem.remove();
+
+        if (data.reply) addMessage("bot", data.reply);
+        if (data.complex) showCategoryButtons();
+
+      } catch (error) {
+        addMessage("bot", "Erreur de connexion au serveur.");
+        console.error(error);
+      } finally {
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+        isWaiting = false;
+      }
+    });
+
+    async function loadDoctors(categorieId, categorieNom) {
+      medecinsList.innerHTML = `
+        <div class="alert alert-info mb-2">
+          <i class="bi bi-hourglass-split"></i> Chargement des médecins en ${categorieNom}...
+        </div>
+      `;
+
+      try {
+        const response = await fetch(`/api/medecins/${categorieId}/`);
+        const data = await response.json();
+
+        if (data.error) {
+          medecinsList.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+          return;
+        }
+
+        if (!data.medecins.length) {
+          medecinsList.innerHTML = `<div class="alert alert-warning">Aucun médecin trouvé en ${categorieNom}.</div>`;
+          return;
+        }
+
+        let html = `
+          <div class="card border-success mb-3">
+            <div class="card-header bg-success text-white">
+              <i class="bi bi-person-badge"></i> Médecins spécialisés en ${data.categorie}
+            </div>
+            <ul class="list-group list-group-flush">
+        `;
+
+        data.medecins.forEach(m => {
+          html += `
+            <li class="list-group-item">
+              <strong>${m.nom}</strong> — ${m.specialite}<br>
+              <span class="text-muted">${m.email}</span><br>
+              <span class="text-muted">${m.telephone}</span>
+            </li>
+          `;
+        });
+
+        html += `</ul></div>`;
+        medecinsList.innerHTML = html;
+        addMessage("bot", `Voici les spécialistes disponibles en ${categorieNom} :`);
+        data.medecins.forEach(m => {
+          addMessage("bot", `<strong>${m.nom}</strong> (${m.specialite}) — ${m.telephone}`);
+        });
+
+      } catch (error) {
+        medecinsList.innerHTML = `<div class="alert alert-danger">Erreur lors du chargement.</div>`;
+        console.error(error);
+      }
+    }
   </script>
 </body>
 </html>
