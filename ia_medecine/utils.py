@@ -1,33 +1,6 @@
 from ollama import Client
-from .models import CategorieMedecine, Medecin
 
 client = Client(host="https://72b942185f79.ngrok-free.app")
-
-#def get_context(prompt):
-  #  query_lower = prompt.lower()
-   # context_parts = []
-
-    #for cat in CategorieMedecine.objects.all():
-     #   if cat.nom.lower() in query_lower:
-      #      context_parts.append(
-       #         f"[CATÉGORIE MÉDICALE]\n"
-       #         f"Nom : {cat.nom}\n"
-        #        f"Description : {cat.description}\n"
-       #     )
-
-    #for med in Medecin.objects.all():
-     #   if med.specialite.lower() in query_lower or med.nom.lower() in query_lower:
-      #      context_parts.append(
-       #         f"[MÉDECIN DISPONIBLE]\n"
-        #        f"Nom : {med.nom}\n"
-         #       f"Spécialité : {med.specialite}\n"
-          #      f"Contact : {med.email or 'Email non disponible'} | {med.telephone or 'Téléphone non disponible'}\n"
-           # )
-
-   # if not context_parts:
-    #    return "Aucune donnée médicale locale trouvée."
-
-    #return "\n".join(context_parts)
 
 def ask_ollama(prompt, history=None):
     SYSTEM_PROMPT = """
