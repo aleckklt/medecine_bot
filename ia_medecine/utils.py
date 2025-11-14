@@ -2,7 +2,7 @@ from ollama import Client
 from .models import CategorieMedecine, Medecin
 
 #client = Client(host='http://localhost:11434')
-client = Client(host="https://76f99ec34722.ngrok-free.app")
+client = Client(host="https://72b942185f79.ngrok-free.app")
 def get_context(prompt):
     query_lower = prompt.lower()
     context_parts = []
@@ -63,7 +63,7 @@ def ask_ollama(prompt, history=None):
     })
 
     response = client.chat(
-        model="llama3.2:latest",
+        model="gemma3:latest",
         messages=messages,
         options={"temperature": 0.4}
     )

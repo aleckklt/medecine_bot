@@ -20,22 +20,28 @@
 
   <main>
     <div class="container my-4">
-      <div class="text-center mb-3">
-      </div>
+      <div class="text-center mb-3"></div>
+
       <div id="medecins-list" class="mb-4"></div>
+
       <div id="chat-box" class="border bg-white rounded p-3" style="height: 60vh; overflow-y: auto;"></div>
     </div>
   </main>
 
   <footer class="bg-dark py-3 border-top mt-auto">
     <div class="container">
-      <h5 class="mb-3">Choisissez un domaine médical :</h5>
-      <div id="categories" class="d-flex flex-wrap justify-content-center gap-2 d-none">
-        {% for cat in categories %}
-          <button class="btn btn-outline-success btn-sm" onclick="loadDoctors('{{ cat.id }}', '{{ cat.nom }}')">
-            {{ cat.nom }}
-          </button>
-        {% endfor %}
+      <div id="categories-box" class="card border-success mb-3 d-none">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-layers"></i> Choisissez un domaine médical</span>
+          <button type="button" class="btn-close btn-close-white" onclick="closeCategories()"></button>
+        </div>
+        <div id="categories" class="card-body d-flex flex-wrap justify-content-center gap-2">
+          {% for cat in categories %}
+            <button class="btn btn-outline-success btn-sm" onclick="loadDoctors('{{ cat.id }}', '{{ cat.nom }}')">
+              {{ cat.nom }}
+            </button>
+          {% endfor %}
+        </div>
       </div>
 
       <form id="chat-form" class="d-flex mt-2">
@@ -54,7 +60,7 @@
     const input = document.getElementById("user-input");
     const chatBox = document.getElementById("chat-box");
     const sendBtn = document.getElementById("send-btn");
-    const categoriesDiv = document.getElementById("categories");
+    const categoriesBox = document.getElementById("categories-box");
     const medecinsList = document.getElementById("medecins-list");
     let isWaiting = false;
 
@@ -62,7 +68,6 @@
       const msgDiv = document.createElement("div");
       msgDiv.classList.add("my-2");
       if (id) msgDiv.dataset.id = id;
-
       if (sender === "user") {
         msgDiv.innerHTML = `
           <div class="d-flex justify-content-end">
@@ -80,13 +85,20 @@
           </div>
         `;
       }
-
       chatBox.appendChild(msgDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     function showCategoryButtons() {
-      categoriesDiv.classList.remove("d-none");
+      categoriesBox.classList.remove("d-none");
+    }
+
+    function closeCategories() {
+      categoriesBox.classList.add("d-none");
+    }
+
+    function closeMedecinsList() {
+      medecinsList.innerHTML = "";
     }
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -122,10 +134,10 @@
 
         if (data.reply) addMessage("bot", data.reply);
         if (data.complex) showCategoryButtons();
+        else closeCategories();
 
       } catch (error) {
         addMessage("bot", "Erreur de connexion au serveur.");
-        console.error(error);
       } finally {
         input.disabled = false;
         sendBtn.disabled = false;
@@ -157,8 +169,9 @@
 
         let html = `
           <div class="card border-success mb-3">
-            <div class="card-header bg-success text-white">
-              <i class="bi bi-person-badge"></i> Médecins spécialisés en ${data.categorie}
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-person-badge"></i> Médecins spécialisés en ${data.categorie}</span>
+              <button type="button" class="btn-close btn-close-white" onclick="closeMedecinsList()"></button>
             </div>
             <ul class="list-group list-group-flush">
         `;
@@ -175,6 +188,7 @@
 
         html += `</ul></div>`;
         medecinsList.innerHTML = html;
+
         addMessage("bot", `Voici les spécialistes disponibles en ${categorieNom} :`);
         data.medecins.forEach(m => {
           addMessage("bot", `<strong>${m.nom}</strong> (${m.specialite}) — ${m.telephone}`);
@@ -182,7 +196,6 @@
 
       } catch (error) {
         medecinsList.innerHTML = `<div class="alert alert-danger">Erreur lors du chargement.</div>`;
-        console.error(error);
       }
     }
   </script>

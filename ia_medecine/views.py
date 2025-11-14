@@ -26,7 +26,7 @@ def chatbot_view(request):
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
-def medecins_par_categorie(categorie_id):
+def medecins_par_categorie(request, categorie_id):
     try:
         categorie = CategorieMedecine.objects.get(id=categorie_id)
         medecins = Medecin.objects.filter(specialite__icontains=categorie.nom)
